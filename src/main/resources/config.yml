@@ -59,3 +59,4 @@ tags:
 
 # Configuração para o intervalo de verificação dos tops em minutos
 top-check-interval: 5
+debug: true

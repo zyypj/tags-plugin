@@ -27,7 +27,7 @@ public class BalanceIntegration {
         return api.balance.getBalance(uuid.toString());
     }
 
-    // Método para processar a placeholder e retornar o nome do jogador no top purse
+    // Método para processar o placeholder e retornar o nome do jogador no top purse
     public String getPurseNameFromPlaceholder(String placeholder) {
         int position = extractPositionFromPlaceholder(placeholder, "purse_name");
         if (position == -1) return "&cPlaceholder inválido";
@@ -39,15 +39,17 @@ public class BalanceIntegration {
         }
     }
 
-    // Método para processar a placeholder e retornar o saldo exibido do jogador no top purse
-    public String getPurseBalanceDisplayFromPlaceholder(String placeholder) {
+    // Método para processar o placeholder e retornar o saldo exibido do jogador no top purse como int
+    public int getPurseBalanceFromPlaceholder(String placeholder) {
         int position = extractPositionFromPlaceholder(placeholder, "purse_balance");
-        if (position == -1) return "&cPlaceholder inválido";
+        if (position == -1) return -1; // Retorna -1 para indicar erro
 
         try {
-            return api.balanceTop.getTopPurse(position).getCoinsDisplay();
+            String coinsDisplay = api.balanceTop.getTopPurse(position).getCoinsDisplay();
+            // Converte o valor de coinsDisplay para int
+            return Integer.parseInt(coinsDisplay.replaceAll("\\D", "")); // Remove caracteres não numéricos
         } catch (Exception e) {
-            return "&cN/A"; // Retorna valor padrão em caso de erro
+            return -1; // Retorna -1 em caso de erro
         }
     }
 

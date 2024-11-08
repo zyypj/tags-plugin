@@ -13,6 +13,7 @@ public class Configuration {
     private String databaseUrl;
     private String databaseUser;
     private String databasePassword;
+    private boolean debug;
 
     public Configuration(Main plugin) {
         this.plugin = plugin;
@@ -29,5 +30,6 @@ public class Configuration {
 
         this.databaseSaveInterval = config.getInt("database-save-interval", 20);
         this.topCheckInterval = config.getInt("top-check-interval", 5);
+        this.debug = config.getBoolean("debug", true);
     }
 }

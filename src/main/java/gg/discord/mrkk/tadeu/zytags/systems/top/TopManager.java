@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class TopManager {
 
@@ -21,7 +20,6 @@ public class TopManager {
     private final VoteIntegration voteIntegration;
 
     private final Map<String, String> previousTopPlaceholders = new HashMap<>();
-    private final Logger logger;
 
     private int topDonateAmount = 0;
     private String topDonatePlayer = "&cNinguém";
@@ -29,48 +27,47 @@ public class TopManager {
     public TopManager(Main plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfiguration();
-        this.logger = plugin.getLogger();
-        this.balanceIntegration = new BalanceIntegration();
-        this.timeIntegration = new TimeIntegration();
-        this.kdrIntegration = new KDRIntegration(plugin);
-        this.skillsIntegration = new SkillsIntegration();
-        this.voteIntegration = new VoteIntegration(plugin);
+        this.balanceIntegration = plugin.getBalanceIntegration();
+        this.timeIntegration = plugin.getTimeIntegration();
+        this.kdrIntegration = plugin.getKdrIntegration();
+        this.skillsIntegration = plugin.getSkillsIntegration();
+        this.voteIntegration = plugin.getVoteIntegration();
 
-        logger.info("Inicializando TopManager e iniciando a tarefa de verificação de tops.");
+        plugin.debug("Inicializando TopManager e iniciando a tarefa de verificação de tops.");
         startTopCheckTask();
     }
 
     private void startTopCheckTask() {
         long intervalTicks = config.getTopCheckInterval() * 20 * 60L;
-        logger.info("Tarefa de verificação de tops configurada para rodar a cada " + config.getTopCheckInterval() + " minutos.");
+        plugin.debug("Tarefa de verificação de tops configurada para rodar a cada " + config.getTopCheckInterval() + " minutos.");
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateTopPlayers, 0L, intervalTicks);
     }
 
     public void updateTopPlayers() {
-        logger.info("Iniciando atualização dos tops...");
+        plugin.debug("Iniciando atualização dos tops...");
         checkTopBalance();
         checkTopTime();
         checkTopKDR();
         checkTopSkills();
         checkTopVotes();
-        logger.info("Atualização dos tops concluída.");
+        plugin.debug("Atualização dos tops concluída.");
     }
 
     private void executeCommands(String playerName, String category, boolean isNewTop) {
         String commandPath = isNewTop ? "commands-to-new-top" : "command-to-old-top";
-        logger.info("Executando comandos para " + (isNewTop ? "novo" : "antigo") + " top na categoria: " + category);
+        plugin.debug("Executando comandos para " + (isNewTop ? "novo" : "antigo") + " top na categoria: " + category);
 
         config.getPlugin().getConfig().getStringList("tags." + category + "." + commandPath).forEach(command -> {
             if (playerName != null && !playerName.equals("&cNinguém")) {
                 String formattedCommand = command.replace("{PLAYER}", playerName);
-                logger.info("Executando comando: " + formattedCommand);
+                plugin.debug("Executando comando: " + formattedCommand);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), formattedCommand);
             }
         });
     }
 
     private void checkTopBalance() {
-        logger.info("Verificando top balance...");
+        plugin.debug("Verificando top balance...");
         String[] categories = {"baltop1", "baltop2", "baltop3"};
 
         for (int i = 1; i <= 3; i++) {
@@ -78,30 +75,29 @@ public class TopManager {
             String balancePlaceholder = "%royaleeconomy_balancetop_purse_balance_" + i + "%";
 
             String topPlayerName = balanceIntegration.getPurseNameFromPlaceholder(namePlaceholder);
-            String topPlayerBalance = balanceIntegration.getPurseBalanceDisplayFromPlaceholder(balancePlaceholder);
+            int topPlayerBalance = balanceIntegration.getPurseBalanceFromPlaceholder(balancePlaceholder);
 
-            // Somente atualize se o placeholder não for inválido
-            if (!topPlayerName.equals("&cPlaceholder inválido") && !topPlayerBalance.equals("&cPlaceholder inválido")) {
-                logger.info("Posição " + i + ": Jogador - " + topPlayerName + ", Saldo - " + topPlayerBalance);
+            if (!topPlayerName.equals("&cPlaceholder inválido") && topPlayerBalance != -1) {
+                plugin.debug("Posição " + i + ": Jogador - " + topPlayerName + ", Saldo - " + topPlayerBalance);
                 updateTop(categories[i - 1], topPlayerName + " - " + topPlayerBalance);
             } else {
-                logger.warning("Placeholder inválido detectado para a posição " + i);
+                plugin.debug("Placeholder inválido detectado para a posição " + i);
             }
         }
     }
 
     private void checkTopTime() {
-        logger.info("Verificando top de tempo...");
+        plugin.debug("Verificando top de tempo...");
         String topPlayerName = timeIntegration.getTopPlayer();
         long playTime = timeIntegration.getOnlineTime(Bukkit.getPlayer(topPlayerName));
         String playTimeDisplay = formatTime(playTime);
 
-        logger.info("Top de tempo: Jogador - " + topPlayerName + ", Tempo - " + playTimeDisplay);
+        plugin.debug("Top de tempo: Jogador - " + topPlayerName + ", Tempo - " + playTimeDisplay);
         updateTop("TopTempo", topPlayerName + " - " + playTimeDisplay);
     }
 
     private void checkTopKDR() {
-        logger.info("Verificando top de KDR...");
+        plugin.debug("Verificando top de KDR...");
         UUID topPlayerUUID = kdrIntegration.getTopPlayerUUID();
 
         if (topPlayerUUID != null) {
@@ -109,37 +105,40 @@ public class TopManager {
             double kdr = kdrIntegration.getKDR(topPlayerUUID);
             String kdrDisplay = String.format("%.2f", kdr);
 
-            logger.info("Top de KDR: Jogador - " + playerName + ", KDR - " + kdrDisplay);
+            plugin.debug("Top de KDR: Jogador - " + playerName + ", KDR - " + kdrDisplay);
             updateTop("TopKDR", playerName + " - " + kdrDisplay);
         } else {
-            logger.warning("UUID para o top KDR é nulo. Verifique a integração de KDR.");
+            plugin.debug("UUID para o top KDR é nulo. Verifique a integração de KDR.");
             updateTop("TopKDR", "&cNinguém - 0.00");
         }
     }
 
-
     private void checkTopSkills() {
-        logger.info("Verificando top de habilidades...");
+        plugin.debug("Verificando top de habilidades...");
         String topPlayerName = skillsIntegration.getTopPlayer();
         int skillPoints = skillsIntegration.getTopValue();
 
-        logger.info("Top de habilidades: Jogador - " + topPlayerName + ", Pontos - " + skillPoints);
-        updateTop("TopSkills", topPlayerName + " - " + skillPoints);
+        if (!topPlayerName.equals("&cPlaceholder inválido")) {
+            plugin.debug("Top de habilidades: Jogador - " + topPlayerName + ", Pontos - " + skillPoints);
+            updateTop("TopSkills", topPlayerName + " - " + skillPoints);
+        } else {
+            plugin.debug("Falha ao obter o placeholder para TopSkills.");
+        }
     }
 
     private void checkTopVotes() {
-        logger.info("Verificando top de votos...");
+        plugin.debug("Verificando top de votos...");
         UUID topPlayerUUID = voteIntegration.getTopPlayerUUID();
         String playerName = topPlayerUUID != null ? Bukkit.getOfflinePlayer(topPlayerUUID).getName() : "&cNinguém";
-        int voteCount = voteIntegration.getVotes(topPlayerUUID); // Supondo que getVotes retorne o número de votos
+        int voteCount = voteIntegration.getVotes(topPlayerUUID);
 
-        logger.info("Top de votos: Jogador - " + playerName + ", Votos - " + voteCount);
+        plugin.debug("Top de votos: Jogador - " + playerName + ", Votos - " + voteCount);
         updateTop("TopVoto", playerName + " - " + voteCount);
     }
 
     private void updateTop(String category, String currentTopPlayerInfo) {
         String previousTopPlayerInfo = previousTopPlaceholders.getOrDefault(category, "&cNinguém");
-        logger.info("Atualizando top para a categoria " + category + ": anterior - " + previousTopPlayerInfo + ", atual - " + currentTopPlayerInfo);
+        plugin.debug("Atualizando top para a categoria " + category + ": anterior - " + previousTopPlayerInfo + ", atual - " + currentTopPlayerInfo);
 
         if (!previousTopPlayerInfo.equals(currentTopPlayerInfo)) {
             String previousTopPlayerName = previousTopPlayerInfo.split(" - ")[0];
@@ -149,7 +148,7 @@ public class TopManager {
         }
 
         previousTopPlaceholders.put(category, currentTopPlayerInfo);
-        logger.info("Top da categoria " + category + " atualizado com sucesso.");
+        plugin.debug("Top da categoria " + category + " atualizado com sucesso.");
     }
 
     public Map<String, String> getCurrentTopPlayers() {
@@ -163,31 +162,24 @@ public class TopManager {
         topPlayers.put("TopSkills", previousTopPlaceholders.getOrDefault("TopSkills", "&cNinguém"));
         topPlayers.put("TopVoto", previousTopPlaceholders.getOrDefault("TopVoto", "&cNinguém"));
 
-        logger.info("Obtendo jogadores top atuais: " + topPlayers);
+        plugin.debug("Obtendo jogadores top atuais: " + topPlayers);
         return topPlayers;
     }
 
     public void updateTopDonate(String playerName, int donateAmount) {
-        // Verifica se o novo valor é maior que o topo atual
         if (donateAmount > topDonateAmount) {
-            // Executa o comando de saída para o antigo Top Donate
             if (!topDonatePlayer.equals("&cNinguém")) {
                 executeCommands(topDonatePlayer, "TopDonate", false);
             }
 
-            // Atualiza o novo Top Donate
             topDonateAmount = donateAmount;
             topDonatePlayer = playerName;
-
-            // Executa o comando de entrada para o novo Top Donate
             executeCommands(topDonatePlayer, "TopDonate", true);
 
-            // Atualiza a entrada de "TopDonate" em previousTopPlaceholders para manter o formato consistente
             previousTopPlaceholders.put("TopDonate", topDonatePlayer + " - " + topDonateAmount);
-
-            logger.info("Top Donate atualizado: Jogador - " + topDonatePlayer + ", Quantidade - " + topDonateAmount);
+            plugin.debug("Top Donate atualizado: Jogador - " + topDonatePlayer + ", Quantidade - " + topDonateAmount);
         } else {
-            logger.info("O valor de doação não é maior que o valor do Top Donate atual.");
+            plugin.debug("O valor de doação não é maior que o valor do Top Donate atual.");
         }
     }
 

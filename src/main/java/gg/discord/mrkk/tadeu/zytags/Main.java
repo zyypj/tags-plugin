@@ -8,12 +8,9 @@ import gg.discord.mrkk.tadeu.zytags.configuration.Configuration;
 import gg.discord.mrkk.tadeu.zytags.configuration.MessagesConfiguration;
 import gg.discord.mrkk.tadeu.zytags.inventories.listener.ViewTagsInventoryListener;
 import gg.discord.mrkk.tadeu.zytags.storage.MySQL;
-import gg.discord.mrkk.tadeu.zytags.systems.BalanceIntegration;
-import gg.discord.mrkk.tadeu.zytags.systems.SkillsIntegration;
-import gg.discord.mrkk.tadeu.zytags.systems.TimeIntegration;
+import gg.discord.mrkk.tadeu.zytags.systems.*;
 import gg.discord.mrkk.tadeu.zytags.systems.kdr.cache.KDRCache;
 import gg.discord.mrkk.tadeu.zytags.systems.kdr.listener.KDRListener;
-import gg.discord.mrkk.tadeu.zytags.systems.VoteIntegration;
 import gg.discord.mrkk.tadeu.zytags.systems.top.TopManager;
 import gg.discord.mrkk.tadeu.zytags.systems.top.cache.TopCache;
 import gg.discord.mrkk.tadeu.zytags.systems.top.placeholder.TopPlaceholders;
@@ -40,6 +37,7 @@ public class Main extends JavaPlugin {
     private SkillsIntegration skillsIntegration;
     private TimeIntegration timeIntegration;
     private VoteIntegration voteIntegration;
+    private KDRIntegration kdrIntegration;
 
     private TopManager topManager;
 
@@ -99,6 +97,12 @@ public class Main extends JavaPlugin {
         getLogger().info(message.replace("&", "§"));
     }
 
+    public void debug(String message) {
+        if (configuration.isDebug()) {
+            log(message, false);
+        }
+    }
+
     private void loadConfiguration() {
 
         long startTime = System.currentTimeMillis();
@@ -142,6 +146,7 @@ public class Main extends JavaPlugin {
         skillsIntegration = new SkillsIntegration();
         timeIntegration = new TimeIntegration();
         voteIntegration = new VoteIntegration(this);
+        kdrIntegration = new KDRIntegration(this);
 
         topManager = new TopManager(this);
 

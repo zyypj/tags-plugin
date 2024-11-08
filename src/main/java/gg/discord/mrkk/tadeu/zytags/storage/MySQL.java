@@ -27,23 +27,38 @@ public class MySQL {
     }
 
     private void createTable() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS player_history (" +
-                "player_uuid VARCHAR(36) PRIMARY KEY," +
-                "kills INT DEFAULT 0," +
-                "deaths INT DEFAULT 0," +
+        // Criação da tabela player_history
+        String createPlayerHistoryTable = "CREATE TABLE IF NOT EXISTS player_history (" +
+                "player_uuid VARCHAR(36) PRIMARY KEY, " +
+                "kills INT DEFAULT 0, " +
+                "deaths INT DEFAULT 0, " +
                 "votes INT DEFAULT 0" +
                 ")";
-        String sql1 = "CREATE TABLE IF NOT EXISTS top_history (" +
+
+        // Criação da tabela player_votes
+        String createPlayerVotesTable = "CREATE TABLE IF NOT EXISTS player_votes (" +
+                "player_uuid VARCHAR(36) PRIMARY KEY, " +  // UUID do jogador como chave primária
+                "votes INT DEFAULT 0" +                    // Contagem de votos do jogador
+                ")";
+
+        // Criação da tabela top_history
+        String createTopHistoryTable = "CREATE TABLE IF NOT EXISTS top_history (" +
                 "category VARCHAR(50), " +
                 "player_name VARCHAR(16), " +
                 "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "PRIMARY KEY (category, player_name)" +
                 ")";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement(sql1)) {
-            statement.executeUpdate();
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt1 = conn.prepareStatement(createPlayerHistoryTable);
+             PreparedStatement stmt2 = conn.prepareStatement(createPlayerVotesTable);
+             PreparedStatement stmt3 = conn.prepareStatement(createTopHistoryTable)) {
+            stmt1.executeUpdate();
+            stmt2.executeUpdate();
+            stmt3.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new SQLException("Erro ao criar as tabelas no banco de dados", e);
         }
     }
 
@@ -86,5 +101,12 @@ public class MySQL {
                 e.printStackTrace();
             }
         }
+    }
+
+    public Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connect();
+        }
+        return connection;
     }
 }

@@ -2,8 +2,7 @@ name: zyTags
 author: 'tadeu'
 version: '${project.version}'
 main: gg.discord.mrkk.tadeu.zytags.Main
-depend: [ RoyaleEconomy, AuraSkills, VotifierPlus ]
-softdepend: [ PlaceholderAPI, CMI ]
+depend: [ RoyaleEconomy, AuraSkills, VotifierPlus, PlaceholderAPI, CMI ]
 commands:
   settopdonate:
     description: "Define a tag TopDonate para um jogador."
