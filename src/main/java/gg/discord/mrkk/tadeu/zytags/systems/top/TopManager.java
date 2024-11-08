@@ -3,18 +3,17 @@ package gg.discord.mrkk.tadeu.zytags.systems.top;
 import gg.discord.mrkk.tadeu.zytags.Main;
 import gg.discord.mrkk.tadeu.zytags.configuration.Configuration;
 import gg.discord.mrkk.tadeu.zytags.systems.*;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class TopManager {
 
     private final Main plugin;
     private final Configuration config;
-    private final BalanceIntegration balanceIntegration;
-    private final TimeIntegration timeIntegration;
     private final KDRIntegration kdrIntegration;
     private final SkillsIntegration skillsIntegration;
     private final VoteIntegration voteIntegration;
@@ -27,8 +26,6 @@ public class TopManager {
     public TopManager(Main plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfiguration();
-        this.balanceIntegration = plugin.getBalanceIntegration();
-        this.timeIntegration = plugin.getTimeIntegration();
         this.kdrIntegration = plugin.getKdrIntegration();
         this.skillsIntegration = plugin.getSkillsIntegration();
         this.voteIntegration = plugin.getVoteIntegration();
@@ -65,18 +62,28 @@ public class TopManager {
             }
         });
     }
-
     private void checkTopBalance() {
         plugin.debug("Verificando top balance...");
+
+        // Categorias para cada posição no ranking de saldo
         String[] categories = {"baltop1", "baltop2", "baltop3"};
 
+        // Loop para as três posições no ranking de saldo
         for (int i = 1; i <= 3; i++) {
-            String namePlaceholder = "%royaleeconomy_balancetop_purse_name_" + i + "%";
-            String balancePlaceholder = "%royaleeconomy_balancetop_purse_balance_" + i + "%";
+            // Obter o nome do jogador e saldo diretamente pelos placeholders da PlaceholderAPI
+            String topPlayerName = PlaceholderAPI.setPlaceholders(null, "%royaleeconomy_balancetop_purse_name_" + i + "%");
+            String topPlayerBalanceString = PlaceholderAPI.setPlaceholders(null, "%royaleeconomy_balancetop_purse_balance_" + i + "%");
 
-            String topPlayerName = balanceIntegration.getPurseNameFromPlaceholder(namePlaceholder);
-            int topPlayerBalance = balanceIntegration.getPurseBalanceFromPlaceholder(balancePlaceholder);
+            // Tenta converter o saldo para um valor numérico
+            int topPlayerBalance;
+            try {
+                topPlayerBalance = Integer.parseInt(topPlayerBalanceString.replaceAll("\\D", "")); // Remove caracteres não numéricos
+            } catch (NumberFormatException e) {
+                plugin.debug("Saldo inválido para o jogador na posição " + i + ": " + topPlayerBalanceString);
+                topPlayerBalance = -1;
+            }
 
+            // Verifica se os placeholders foram obtidos com sucesso
             if (!topPlayerName.equals("&cPlaceholder inválido") && topPlayerBalance != -1) {
                 plugin.debug("Posição " + i + ": Jogador - " + topPlayerName + ", Saldo - " + topPlayerBalance);
                 updateTop(categories[i - 1], topPlayerName + " - " + topPlayerBalance);
@@ -88,12 +95,32 @@ public class TopManager {
 
     private void checkTopTime() {
         plugin.debug("Verificando top de tempo...");
-        String topPlayerName = timeIntegration.getTopPlayer();
-        long playTime = timeIntegration.getOnlineTime(Bukkit.getPlayer(topPlayerName));
-        String playTimeDisplay = formatTime(playTime);
 
-        plugin.debug("Top de tempo: Jogador - " + topPlayerName + ", Tempo - " + playTimeDisplay);
-        updateTop("TopTempo", topPlayerName + " - " + playTimeDisplay);
+        CompletableFuture.runAsync(() -> {
+            OfflinePlayer topPlayer = Arrays.stream(Bukkit.getOfflinePlayers())
+                    .max(Comparator.comparingLong(player -> parsePlayTime(
+                            PlaceholderAPI.setPlaceholders(player, "%cmi_user_stats_PlayTime%")
+                    )))
+                    .orElse(null);
+
+            if (topPlayer != null) {
+                long maxPlayTime = parsePlayTime(PlaceholderAPI.setPlaceholders(topPlayer, "%cmi_user_stats_PlayTime%"));
+                String playTimeDisplay = formatTime(maxPlayTime);
+                plugin.debug("Top de tempo: Jogador - " + topPlayer.getName() + ", Tempo - " + playTimeDisplay);
+                updateTop("TopTempo", topPlayer.getName() + " - " + playTimeDisplay);
+            } else {
+                plugin.debug("Nenhum jogador com tempo de jogo encontrado.");
+                updateTop("TopTempo", "&cNinguém - 0h 0m 0s");
+            }
+        });
+    }
+
+    private long parsePlayTime(String playTimePlaceholder) {
+        try {
+            return playTimePlaceholder != null ? Long.parseLong(playTimePlaceholder) : 0;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void checkTopKDR() {

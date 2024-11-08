@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.UUID;
 
 public class VoteIntegration {
@@ -58,42 +57,16 @@ public class VoteIntegration {
      *
      * @return UUID do jogador com o maior número de votos ou null se não houver jogadores.
      */
+    // Exemplo simplificado de método em VoteIntegration
     public UUID getTopPlayerUUID() {
-        UUID topPlayerUUID = null;
-        int highestVotes = -1;
-
-        // Verifica todos os jogadores no cache
-        for (Map.Entry<UUID, Integer> entry : voteCache.getAllVotes().entrySet()) {
-            UUID playerUUID = entry.getKey();
-            int votes = getVotes(playerUUID);
-
-            if (votes > highestVotes) {
-                highestVotes = votes;
-                topPlayerUUID = playerUUID;
-            }
-        }
-
-        // Verifica os votos do banco de dados, caso necessário
-        try (Connection conn = database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT player_uuid, votes FROM player_votes")) {
-
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                UUID playerUUID = UUID.fromString(rs.getString("player_uuid"));
-                int votes = rs.getInt("votes");
-
-                // Considera o máximo entre cache e database
-                votes = Math.max(votes, voteCache.getVotes(playerUUID));
-
-                if (votes > highestVotes) {
-                    highestVotes = votes;
-                    topPlayerUUID = playerUUID;
-                }
+        try (PreparedStatement statement = database.getConnection().prepareStatement("SELECT player_uuid FROM player_votes ORDER BY votes DESC LIMIT 1")) {
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return UUID.fromString(resultSet.getString("player_uuid"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        return topPlayerUUID;
+        return null;
     }
 }

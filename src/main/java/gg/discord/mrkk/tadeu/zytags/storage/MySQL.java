@@ -27,7 +27,6 @@ public class MySQL {
     }
 
     private void createTable() throws SQLException {
-        // Criação da tabela player_history
         String createPlayerHistoryTable = "CREATE TABLE IF NOT EXISTS player_history (" +
                 "player_uuid VARCHAR(36) PRIMARY KEY, " +
                 "kills INT DEFAULT 0, " +
@@ -35,13 +34,11 @@ public class MySQL {
                 "votes INT DEFAULT 0" +
                 ")";
 
-        // Criação da tabela player_votes
         String createPlayerVotesTable = "CREATE TABLE IF NOT EXISTS player_votes (" +
-                "player_uuid VARCHAR(36) PRIMARY KEY, " +  // UUID do jogador como chave primária
-                "votes INT DEFAULT 0" +                    // Contagem de votos do jogador
+                "player_uuid VARCHAR(36) PRIMARY KEY, " +
+                "votes INT DEFAULT 0" +
                 ")";
 
-        // Criação da tabela top_history
         String createTopHistoryTable = "CREATE TABLE IF NOT EXISTS top_history (" +
                 "category VARCHAR(50), " +
                 "player_name VARCHAR(16), " +
@@ -56,16 +53,13 @@ public class MySQL {
             stmt1.executeUpdate();
             stmt2.executeUpdate();
             stmt3.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new SQLException("Erro ao criar as tabelas no banco de dados", e);
         }
     }
 
     public void updateKDR(String playerUUID, int kills, int deaths) throws SQLException {
         String sql = "INSERT INTO player_history (player_uuid, kills, deaths) VALUES (?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE kills = VALUES(kills), deaths = VALUES(deaths)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
             statement.setString(1, playerUUID);
             statement.setInt(2, kills);
             statement.setInt(3, deaths);
@@ -76,7 +70,7 @@ public class MySQL {
     public void updateVotes(String playerUUID, int votes) throws SQLException {
         String sql = "INSERT INTO player_history (player_uuid, votes) VALUES (?, ?) " +
                 "ON DUPLICATE KEY UPDATE votes = VALUES(votes)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
             statement.setString(1, playerUUID);
             statement.setInt(2, votes);
             statement.executeUpdate();
@@ -86,7 +80,7 @@ public class MySQL {
     public void saveTopHistory(String category, String playerName) throws SQLException {
         String sql = "INSERT INTO top_history (category, player_name) VALUES (?, ?) " +
                 "ON DUPLICATE KEY UPDATE timestamp = CURRENT_TIMESTAMP";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
             stmt.setString(1, category);
             stmt.setString(2, playerName);
             stmt.executeUpdate();
