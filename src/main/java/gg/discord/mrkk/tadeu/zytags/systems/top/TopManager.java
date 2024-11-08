@@ -104,7 +104,8 @@ public class TopManager {
                     .orElse(null);
 
             if (topPlayer != null) {
-                long maxPlayTime = parsePlayTime(PlaceholderAPI.setPlaceholders(topPlayer, "%cmi_user_stats_PlayTime%"));
+                String playTimePlaceholder = PlaceholderAPI.setPlaceholders(topPlayer, "%cmi_user_stats_PlayTime%");
+                long maxPlayTime = parsePlayTime(playTimePlaceholder);
                 String playTimeDisplay = formatTime(maxPlayTime);
                 plugin.debug("Top de tempo: Jogador - " + topPlayer.getName() + ", Tempo - " + playTimeDisplay);
                 updateTop("TopTempo", topPlayer.getName() + " - " + playTimeDisplay);
@@ -116,12 +117,49 @@ public class TopManager {
     }
 
     private long parsePlayTime(String playTimePlaceholder) {
-        try {
-            return playTimePlaceholder != null ? Long.parseLong(playTimePlaceholder) : 0;
-        } catch (NumberFormatException e) {
+        if (playTimePlaceholder == null || playTimePlaceholder.isEmpty()) {
             return 0;
         }
+
+        long totalSeconds = 0;
+        String[] timeParts = playTimePlaceholder.split(" ");
+
+        for (int i = 0; i < timeParts.length; i += 2) {
+            try {
+                int value = Integer.parseInt(timeParts[i]);
+                String unit = timeParts[i + 1].toLowerCase();
+
+                switch (unit) {
+                    case "day":
+                    case "days":
+                        totalSeconds += value * 86400L; // 1 day = 86400 seconds
+                        break;
+                    case "hour":
+                    case "hours":
+                        totalSeconds += value * 3600L; // 1 hour = 3600 seconds
+                        break;
+                    case "min":
+                    case "minute":
+                    case "minutes":
+                        totalSeconds += value * 60L; // 1 minute = 60 seconds
+                        break;
+                    case "sec":
+                    case "second":
+                    case "seconds":
+                        totalSeconds += value;
+                        break;
+                    default:
+                        plugin.debug("Unrecognized time unit: " + unit);
+                        break;
+                }
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                plugin.debug("Erro ao analisar o tempo de jogo: " + playTimePlaceholder);
+            }
+        }
+
+        return totalSeconds;
     }
+
 
     private void checkTopKDR() {
         plugin.debug("Verificando top de KDR...");
@@ -210,10 +248,12 @@ public class TopManager {
         }
     }
 
-    private String formatTime(long playTime) {
-        long hours = playTime / 3600;
-        long minutes = (playTime % 3600) / 60;
-        long seconds = playTime % 60;
-        return String.format("%02dh %02dm %02ds", hours, minutes, seconds);
+    private String formatTime(long totalSeconds) {
+        long days = totalSeconds / 86400;
+        long hours = (totalSeconds % 86400) / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        return String.format("%d days %02d hours %02d min %02d sec", days, hours, minutes, seconds);
     }
 }
