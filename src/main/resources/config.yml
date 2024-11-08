@@ -1,0 +1,61 @@
+# Configurações de Banco de Dados
+database:
+  url: "jdbc:mysql://localhost:3306/minecraft" # URL do banco de dados
+  user: "root" # Usuário do banco de dados
+  password: "password" # Senha do banco de dados
+
+# Intervalo de salvamento em minutos para salvar dados do cache no banco de dados
+database-save-interval: 20
+
+tags:
+  baltop1:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group baltop1'
+      - 'bc &a{PLAYER} é o mais novo Top 1 do Balance'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove baltop1'
+  Baltop2:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group baltop2'
+      - 'bc &a{PLAYER} é o mais novo Top 2 do Balance'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove baltop2'
+  Baltop3:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group baltop3'
+      - 'bc &a{PLAYER} é o mais novo Top 3 do Balance'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove baltop3'
+  TopTempo:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group toptempo'
+      - 'bc &a{PLAYER} é o mais novo Top 1 de Tempo'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove toptempo'
+  TopKDR:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group topkdr'
+      - 'bc &a{PLAYER} é o mais novo Top 1 de KDR'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove topkdr'
+  TopSkills:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group topskills'
+      - 'bc &a{PLAYER} é o mais novo Top 1 de Skills'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove topskills'
+  TopDonate:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group topdonate'
+      - 'bc &a{PLAYER} é o mais novo Top 1 de Donate'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove topdonate'
+  TopVoto:
+    commands-to-new-top:
+      - 'lp user {PLAYER} add group topvote'
+      - 'bc &a{PLAYER} é o mais novo Top 1 de Vote'
+    command-to-old-top:
+      - 'lp user {PLAYER} add remove topvote'
+
+# Configuração para o intervalo de verificação dos tops em minutos
+top-check-interval: 5

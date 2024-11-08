@@ -1,0 +1,7 @@
+no_permission: "&cVocê não tem permissão para isso."
+view-tags-item-name: "&e{CATEGORY}"
+view-tags-item-lore:
+  - "&fJogador: &e{PLAYER}"
+  - "&fCategoria: &e{CATEGORY}"
+player-not-found: "&cO jogador {PLAYER} não está online."
+update-top-donate: "&aVocê deu a tag Top Donate para {PLAYER} com {AMOUNT} reais doados."

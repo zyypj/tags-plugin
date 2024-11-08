@@ -1,0 +1,17 @@
+name: zyTags
+author: 'tadeu'
+version: '${project.version}'
+main: com.github.zyypj.zytags.Main
+depend: [ RoyaleEconomy, AuraSkills, VotifierPlus ]
+softdepend: [ PlaceholderAPI, CMI ]
+commands:
+  settopdonate:
+    description: "Define a tag TopDonate para um jogador."
+    permission: "settopdonate.use"
+  viewtags:
+    description: "Ver tags"
+  reloadtags:
+    description: "Recarregar as tags"
+  zytags:
+    description: "Comando principal"
+    permission: "zytags.reload"
