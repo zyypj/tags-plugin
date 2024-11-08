@@ -1,7 +1,7 @@
 name: zyTags
 author: 'tadeu'
 version: '${project.version}'
-main: com.github.zyypj.zytags.Main
+main: gg.discord.mrkk.tadeu.zytags.Main
 depend: [ RoyaleEconomy, AuraSkills, VotifierPlus ]
 softdepend: [ PlaceholderAPI, CMI ]
 commands:
